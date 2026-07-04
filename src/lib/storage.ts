@@ -1,10 +1,18 @@
 import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
+import { put, del } from "@vercel/blob";
 
-// Files live outside /public so they can only be reached through the
-// ownership-checked /api/files/[id] route.
+// Storage is adaptive:
+//   - If BLOB_READ_WRITE_TOKEN is set (production) → Vercel Blob.
+//   - Otherwise (local dev) → files under ./uploads.
+// Attachment.filePath holds either a relative local path or a full blob URL.
+// Files are always served through the ownership-checked /api/files/[id] route,
+// so blob URLs are never exposed to the client.
+
 const UPLOADS_ROOT = path.join(process.cwd(), "uploads");
+const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
+const useBlob = Boolean(BLOB_TOKEN);
 
 export const MAX_FILE_BYTES = 15 * 1024 * 1024; // 15 MB
 
@@ -49,20 +57,36 @@ function extFor(mime: string): string {
   return map[mime] ?? "bin";
 }
 
+function isUrl(p: string): boolean {
+  return p.startsWith("http://") || p.startsWith("https://");
+}
+
 /**
- * Persist a buffer to disk under uploads/<userId>/ and return the path
- * relative to the uploads root (what we store in Attachment.filePath).
+ * Persist a buffer and return the value to store in Attachment.filePath:
+ * a blob URL (production) or a path relative to the uploads root (local dev).
  */
 export async function saveFile(
   userId: string,
   buffer: Buffer,
   mime: string,
 ): Promise<string> {
+  const name = `${crypto.randomBytes(16).toString("hex")}.${extFor(mime)}`;
+  const key = path.posix.join(userId, name);
+
+  if (useBlob) {
+    const blob = await put(key, buffer, {
+      access: "public",
+      token: BLOB_TOKEN,
+      contentType: mime,
+      addRandomSuffix: true,
+    });
+    return blob.url;
+  }
+
   const dir = path.join(UPLOADS_ROOT, userId);
   await fs.mkdir(dir, { recursive: true });
-  const name = `${crypto.randomBytes(16).toString("hex")}.${extFor(mime)}`;
   await fs.writeFile(path.join(dir, name), buffer);
-  return path.posix.join(userId, name);
+  return key;
 }
 
 /** Absolute path for a stored relative filePath, guarded against traversal. */
@@ -74,20 +98,30 @@ export function resolveStoredPath(relativePath: string): string {
   return abs;
 }
 
-export async function readStoredFile(relativePath: string): Promise<Buffer> {
-  return fs.readFile(resolveStoredPath(relativePath));
+export async function readStoredFile(filePath: string): Promise<Buffer> {
+  if (isUrl(filePath)) {
+    const res = await fetch(filePath);
+    if (!res.ok) throw new Error(`Blob fetch failed (${res.status})`);
+    return Buffer.from(await res.arrayBuffer());
+  }
+  return fs.readFile(resolveStoredPath(filePath));
 }
 
-export async function deleteStoredFile(relativePath: string): Promise<void> {
+export async function deleteStoredFile(filePath: string): Promise<void> {
   try {
-    await fs.unlink(resolveStoredPath(relativePath));
+    if (isUrl(filePath)) {
+      await del(filePath, { token: BLOB_TOKEN });
+    } else {
+      await fs.unlink(resolveStoredPath(filePath));
+    }
   } catch {
     // already gone — ignore
   }
 }
 
-export function contentTypeForPath(relativePath: string): string {
-  const ext = path.extname(relativePath).slice(1).toLowerCase();
+export function contentTypeForPath(filePath: string): string {
+  const clean = filePath.split("?")[0];
+  const ext = path.extname(clean).slice(1).toLowerCase();
   const map: Record<string, string> = {
     jpg: "image/jpeg",
     png: "image/png",

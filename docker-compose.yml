@@ -1,0 +1,19 @@
+# Local Postgres for development.
+#   docker compose up -d
+# Then set in .env:
+#   DATABASE_URL="postgresql://dailylog:dailylog@localhost:5432/dailylog"
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dailylog
+      POSTGRES_PASSWORD: dailylog
+      POSTGRES_DB: dailylog
+    ports:
+      - "5432:5432"
+    volumes:
+      - dailylog_pgdata:/var/lib/postgresql/data
+
+volumes:
+  dailylog_pgdata:
