@@ -44,6 +44,6 @@ untuk mengaktifkan fitur AI.
 ## Peta jalan pengembangan
 
 - [x] **Fase 1 — Fondasi**: setup, auth (daftar/login), pengaturan BYOK terenkripsi
-- [ ] **Fase 2 — Daily Log**: buat/edit catatan (teks, gambar, suara→teks)
+- [x] **Fase 2 — Daily Log**: buat/edit/hapus catatan (teks, gambar, suara→teks)
 - [ ] **Fase 3 — Laporan Mingguan**: kelompok per minggu, analisis, export Markdown
 - [ ] **Fase 4 — Poles**: styling, validasi, edge case
