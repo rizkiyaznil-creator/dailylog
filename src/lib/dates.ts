@@ -48,3 +48,39 @@ export function formatLongID(date: Date): string {
 export function formatShortID(date: Date): string {
   return `${date.getUTCDate()} ${MONTHS[date.getUTCMonth()].slice(0, 3)}`;
 }
+
+/** Monday (UTC midnight) of the ISO week containing `date`. */
+export function startOfWeek(date: Date): Date {
+  const d = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()),
+  );
+  const dow = d.getUTCDay(); // 0 = Sunday
+  const diff = (dow + 6) % 7; // days since Monday
+  d.setUTCDate(d.getUTCDate() - diff);
+  return d;
+}
+
+/** Sunday (UTC midnight) of the ISO week containing `date`. */
+export function endOfWeek(date: Date): Date {
+  const start = startOfWeek(date);
+  const end = new Date(start);
+  end.setUTCDate(end.getUTCDate() + 6);
+  return end;
+}
+
+/** Add `days` to a date, returning a new UTC-midnight Date. */
+export function addDays(date: Date, days: number): Date {
+  const d = new Date(date);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d;
+}
+
+/** "30 Jun – 6 Jul 2026" range label for a week starting on `monday`. */
+export function formatWeekRange(monday: Date): string {
+  const sunday = addDays(monday, 6);
+  const sameMonth = monday.getUTCMonth() === sunday.getUTCMonth();
+  const left = sameMonth
+    ? String(monday.getUTCDate())
+    : formatShortID(monday);
+  return `${left} – ${formatShortID(sunday)} ${sunday.getUTCFullYear()}`;
+}
