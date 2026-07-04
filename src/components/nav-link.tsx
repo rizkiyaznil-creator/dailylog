@@ -17,7 +17,7 @@ export function NavLink({
     <Link
       href={href}
       className={
-        "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors " +
+        "shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors " +
         (active
           ? "bg-indigo-50 text-indigo-700"
           : "text-slate-600 hover:bg-slate-100 hover:text-slate-900")

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Markdown } from "@/components/markdown";
 
 export function NarrativeSection({
   weekStart,
@@ -60,9 +61,7 @@ export function NarrativeSection({
       )}
 
       {narrative ? (
-        <div className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
-          {narrative}
-        </div>
+        <Markdown>{narrative}</Markdown>
       ) : canGenerate ? (
         <p className="text-sm text-slate-500">
           Belum ada analisis. Klik “Buat narasi” untuk merangkum minggu ini

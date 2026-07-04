@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser, aiCapabilities } from "@/lib/user";
 import { buildWeeklyReport } from "@/lib/report";
 import { formatLongID, formatWeekRange, parseDateOnly } from "@/lib/dates";
+import { Markdown } from "@/components/markdown";
 import { NarrativeSection } from "./narrative-section";
 
 export const dynamic = "force-dynamic";
@@ -109,9 +110,7 @@ export default async function ReportDetailPage({
                     className="border-l-2 border-slate-100 pl-3"
                   >
                     {log.content.trim() && (
-                      <p className="whitespace-pre-wrap text-sm text-slate-700">
-                        {log.content.trim()}
-                      </p>
+                      <Markdown>{log.content.trim()}</Markdown>
                     )}
                     {log.attachments.map((a) => (
                       <div key={a.id} className="mt-2">

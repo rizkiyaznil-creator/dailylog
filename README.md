@@ -46,4 +46,4 @@ untuk mengaktifkan fitur AI.
 - [x] **Fase 1 — Fondasi**: setup, auth (daftar/login), pengaturan BYOK terenkripsi
 - [x] **Fase 2 — Daily Log**: buat/edit/hapus catatan (teks, gambar, suara→teks)
 - [x] **Fase 3 — Laporan Mingguan**: kelompok per minggu, analisis statistik + narasi AI (Claude), export Markdown
-- [ ] **Fase 4 — Poles**: styling, validasi, edge case
+- [x] **Fase 4 — Poles**: render Markdown, navigasi responsif, loading state
