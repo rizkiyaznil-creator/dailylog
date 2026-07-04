@@ -1,0 +1,67 @@
+// Prisma schema for DailyLog
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+
+  // BYOK — encrypted API keys (AES-256-GCM). Null = feature falls back to mock/stats only.
+  openaiKeyEnc    String? // for Whisper transcription
+  anthropicKeyEnc String? // for weekly narrative analysis
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  logs       DailyLog[]
+  narratives WeeklyNarrative[]
+}
+
+model WeeklyNarrative {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekStart DateTime // Monday (UTC midnight) identifying the week
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, weekStart])
+}
+
+model DailyLog {
+  id      String   @id @default(cuid())
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logDate DateTime // the calendar day this log belongs to
+  content String   @default("") // free-text body (markdown)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachments Attachment[]
+
+  @@index([userId, logDate])
+}
+
+model Attachment {
+  id         String   @id @default(cuid())
+  logId      String
+  log        DailyLog @relation(fields: [logId], references: [id], onDelete: Cascade)
+  type       String // "image" | "audio"
+  filePath   String // path relative to the uploads dir
+  transcript String? // for audio: transcribed text (mock or Whisper)
+  createdAt  DateTime @default(now())
+
+  @@index([logId])
+}
